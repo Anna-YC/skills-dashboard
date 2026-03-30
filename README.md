@@ -5,6 +5,7 @@ Claude Code / Agent / Codex Skills 可视化管理面板。
 自动解析 `~/.claude/skills`、`~/.agents/skkills`、`~/.codex/skills` 三个目录下的所有 skill，生成含来源标注的 CSV 清单，并在本地启动可视化看板。
 
 ![Skills Dashboard](https://raw.githubusercontent.com/Anna-YC/skills-dashboard/main/screenshot.png)
+![Skills Dashboard](https://raw.githubusercontent.com/Anna-YC/skills-dashboard/main/screenshot2.png)
 
 ## 功能特性
 
