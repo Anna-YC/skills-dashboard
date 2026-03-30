@@ -10,7 +10,7 @@ user-invocable: true
 version: 1.2.0
 metadata:
   openclaw:
-    homepage: https://github.com/JimLiu/skills-dashboard
+    homepage: https://github.com/Anna-YC/skills-dashboard
     requires:
       anyBins:
         - node
