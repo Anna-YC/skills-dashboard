@@ -269,6 +269,7 @@ function collectSkills() {
         linked: LINKED_SKILLS.has(name),
         sources: [source],
         charCount: name.length + desc.length,
+        tokenEst: Math.ceil(name.length / 4 + desc.length / 2),
       });
     }
   }
@@ -300,9 +301,9 @@ function escapeCSV(v) {
 
 function generateCSV(skills) {
   const date = todayStr();
-  const lines = ['skill名称,描述,标题,分类,来源,字符数'];
+  const lines = ['skill名称,描述,标题,分类,来源,字符数,token估算'];
   for (const s of skills) {
-    lines.push([s.name, s.desc, s.title, s.cat, s.sources.join(', '), s.charCount].map(escapeCSV).join(','));
+    lines.push([s.name, s.desc, s.title, s.cat, s.sources.join(', '), s.charCount, s.tokenEst].map(escapeCSV).join(','));
   }
   return { csv: lines.join('\n'), date };
 }
