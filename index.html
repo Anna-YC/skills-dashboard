@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skills Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --primary: #6366f1;
+    --primary-light: #e0e7ff;
+    --success: #10b981;
+    --success-light: #d1fae5;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --text: #1e293b;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -2px rgba(0,0,0,.04);
+    --radius: 12px;
+    --accent-bar: #6366f1;
+  }
+  [data-theme="dark"] {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --primary: #818cf8;
+    --primary-light: #1e1b4b;
+    --success: #34d399;
+    --success-light: #064e3b;
+    --warning: #fbbf24;
+    --warning-light: #78350f;
+    --danger: #f87171;
+    --danger-light: #7f1d1d;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --shadow: 0 1px 3px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,.4), 0 4px 6px -2px rgba(0,0,0,.2);
+    --accent-bar: #818cf8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: #fff;
+    padding: 28px 40px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(99,102,241,.35);
+  }
+  header h1 {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.5px;
+  }
+  header p { opacity: .75; font-size: 13px; margin-top: 6px; letter-spacing: .2px; }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .header-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,.3);
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+    backdrop-filter: blur(8px);
+  }
+  .header-btn:hover {
+    background: rgba(255,255,255,.25);
+    border-color: rgba(255,255,255,.5);
+  }
+  .header-btn:active { transform: scale(.96); }
+  .header-btn.loading { opacity: .6; pointer-events: none; }
+  .header-btn .spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Progress Bar ── */
+  .progress-bar-wrap {
+    padding: 0 40px 0;
+  }
+  .progress-bar-inner {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px 24px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .progress-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    min-width: 80px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 10px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    min-width: 120px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    transition: width .8s cubic-bezier(.22,1,.36,1);
+    position: relative;
+  }
+  .progress-fill::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.35));
+  }
+  .progress-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .progress-stats strong { color: var(--success); }
+  .progress-stats em { color: var(--text-muted); font-style: normal; }
+
+  /* ── Stats Row ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    padding: 24px 40px 0;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+  .stat-card .num {
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--primary);
+  }
+  .stat-card .num.green { color: var(--success); }
+  .stat-card .num.yellow { color: var(--warning); }
+  .stat-card .num.red { color: var(--danger); }
+  .stat-card .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .stat-card .sub { font-size: 11px; color: var(--text-muted); }
+
+  /* ── Charts Row ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr;
+    gap: 20px;
+    padding: 20px 40px;
+  }
+  .chart-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .chart-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 16px;
+  }
+  canvas { max-height: 240px; }
+
+  /* ── Filter Bar ── */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 16px 40px 12px;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 9px 12px 9px 36px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    background: var(--card);
+    outline: none;
+    transition: border-color .15s;
+  }
+  .search-box input:focus { border-color: var(--primary); }
+  .search-box::before {
+    content: '🔍';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 13px;
+  }
+  .filter-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-tag {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text-muted);
+    transition: all .15s;
+    user-select: none;
+  }
+  .filter-tag:hover { border-color: var(--primary); color: var(--primary); }
+  .filter-tag.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  .filter-tag .count {
+    display: inline-block;
+    background: rgba(255,255,255,.25);
+    border-radius: 10px;
+    padding: 0 6px;
+    font-size: 10px;
+    margin-left: 4px;
+  }
+  .filter-tag:not(.active) .count {
+    background: var(--bg);
+  }
+
+  /* ── Table ── */
+  .table-wrap {
+    padding: 16px 40px 40px;
+  }
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  thead tr {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    white-space: nowrap;
+  }
+  th:first-child { border-radius: var(--radius) 0 0 0; }
+  th:last-child { border-radius: 0 var(--radius) 0 0; }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s, border-color .15s;
+    border-left: 3px solid transparent;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover {
+    background: var(--primary-light);
+    border-left-color: var(--primary);
+  }
+  td {
+    padding: 11px 16px;
+    vertical-align: middle;
+  }
+  .skill-name {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--primary);
+    cursor: pointer;
+  }
+  .skill-name:hover { text-decoration: underline; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-cat {
+    background: var(--primary-light);
+    color: #4338ca;
+  }
+  .badge-linked {
+    background: var(--success-light);
+    color: #065f46;
+  }
+  .badge-unlinked {
+    background: var(--bg);
+    color: var(--text-muted);
+  }
+  .badge-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .btn-detail {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--card);
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all .15s;
+  }
+  .btn-detail:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  /* ── Detail Drawer ── */
+  .drawer-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+  .drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 520px;
+    max-width: 95vw;
+    background: var(--card);
+    z-index: 201;
+    transform: translateX(100%);
+    transition: transform .3s cubic-bezier(.22,1,.36,1);
+    overflow-y: auto;
+    box-shadow: -8px 0 30px rgba(0,0,0,.15);
+  }
+  .drawer.open { transform: translateX(0); }
+  .drawer-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--card);
+    z-index: 1;
+  }
+  .drawer-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s;
+  }
+  .drawer-close:hover { background: var(--bg); }
+  .drawer-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 4px;
+  }
+  .drawer-title {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .drawer-body { padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; }
+  .drawer-section {}
+  .drawer-section h4 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 8px;
+  }
+  .drawer-section p {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .drawer-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .meta-item {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .meta-item .meta-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+  .meta-item .meta-value { font-size: 13px; font-weight: 600; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  footer a { color: var(--primary); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ── Empty State ── */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .empty::before {
+    content: '🔍';
+    font-size: 48px;
+    display: block;
+    margin-bottom: 16px;
+  }
+
+  /* ── Tooltip ── */
+  [data-tip] { position: relative; cursor: help; }
+  [data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: #fff;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 10;
+  }
+  [data-tip]:hover::after { opacity: 1; }
+
+  @media (max-width: 768px) {
+    .charts-row { grid-template-columns: 1fr; padding: 16px 16px; }
+    .stats-row { padding: 20px 16px 0; }
+    .progress-bar-wrap { padding: 0 16px 0; }
+    .table-wrap, .filter-bar { padding-left: 16px; padding-right: 16px; }
+    header { padding: 20px 16px 18px; }
+    .drawer { width: 100vw; }
+    .progress-stats { gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <h1>🎯 Skills 可视化看板</h1>
+  <p>Claude Code 本地 Skills 可视化管理面板 · 更新时间：<span id="updateDate">2026-03-29</span></p>
+  <div class="header-actions">
+    <button class="header-btn" onclick="reloadSkills()" id="reloadBtn" title="重新解析 skill 文件并刷新数据">
+      🔄 加载最新
+    </button>
+    <button class="header-btn" onclick="exportCSV()" title="导出当前数据为 CSV">
+      📥 导出 CSV
+    </button>
+    <button class="header-btn" onclick="toggleTheme()" id="themeBtn">
+      🌙 深色模式
+    </button>
+  </div>
+</header>
+
+<!-- Stats -->
+<div class="stats-row">
+  <div class="stat-card" onclick="filterByCat(null)">
+    <span class="num" id="stat-total">50</span>
+    <span class="label">Skill 总数</span>
+    <span class="sub">全部</span>
+  </div>
+  <div class="stat-card" onclick="filterByCat(null)">
+    <span class="num green" id="stat-linked">21</span>
+    <span class="label">已接入</span>
+    <span class="sub">软链接已建立</span>
+  </div>
+  <div class="stat-card" data-source-stats>
+    <span class="num" id="stat-sources">3</span>
+    <span class="label">来源</span>
+    <span class="source-stats sub">ClaudeCode / Agent / Codex</span>
+  </div>
+  <div class="stat-card">
+    <span class="num red" id="stat-unlinked">29</span>
+    <span class="label">未接入</span>
+    <span class="sub">非本地接入</span>
+  </div>
+  <div class="stat-card">
+    <span class="num" id="stat-cats">21</span>
+    <span class="label">分类数</span>
+    <span class="sub">功能分类</span>
+  </div>
+</div>
+
+<!-- Progress Bar -->
+<div class="progress-bar-wrap">
+  <div class="progress-bar-inner">
+    <span class="progress-label">接入进度</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="progress-stats">
+      <span><strong id="stat-rate">42%</strong></span>
+      <span><em>已接入</em> <strong id="stat-linked2">21</strong>/<span id="stat-total2">50</span></span>
+      <span><em>未接入</em> <span id="stat-unlinked2">29</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts -->
+<div class="charts-row">
+  <div class="chart-card">
+    <h3>📊 分类分布</h3>
+    <canvas id="barChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>🥧 来源分布</h3>
+    <canvas id="pieChart"></canvas>
+  </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="搜索 skill 名称、描述…" oninput="render()">
+  </div>
+  <div class="filter-tags" id="catFilters"></div>
+  <div style="margin-left:auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+    <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;">状态:</span>
+    <div class="filter-tags">
+      <span class="filter-tag active" data-status="all" onclick="setStatus(this)">全部</span>
+      <span class="filter-tag" data-status="linked" onclick="setStatus(this)">已接入</span>
+      <span class="filter-tag" data-status="unlinked" onclick="setStatus(this)">系统内置</span>
+    </div>
+    <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;">来源:</span>
+    <div class="filter-tags" id="sourceFilters">
+      <span class="filter-tag active" data-source="all" onclick="toggleSource(this)">全部</span>
+      <span class="filter-tag" data-source="ClaudeCode" onclick="toggleSource(this)">ClaudeCode</span>
+      <span class="filter-tag" data-source="Agent" onclick="toggleSource(this)">Agent</span>
+      <span class="filter-tag" data-source="Codex" onclick="toggleSource(this)">Codex</span>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Skill 名称</th>
+        <th>来源</th>
+        <th>分类</th>
+        <th>接入状态</th>
+        <th>描述</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="skillTable"></tbody>
+  </table>
+  <div class="empty" id="emptyState" style="display:none;">没有匹配的结果</div>
+</div>
+
+<!-- Detail Drawer -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    <div class="drawer-name" id="drawer-name"></div>
+    <div class="drawer-title" id="drawer-title"></div>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<footer>
+  数据来源：<a href="file:///Users/ai-agent/.claude/skills-inventory.csv">skills-inventory.csv</a> &nbsp;·&nbsp; 软链接目录：<code>~/.claude/skills/</code>
+</footer>
+
+<script>
+// ── Data ──
+const skills = [
+  {name:'anything-to-notebooklm',desc:'多源内容智能处理器：支持微信公众号、网页、YouTube、PDF、Markdown等内容接入，自动上传到NotebookLM，并生成播客、PPT、思维导图等多种格式。默认保存到~/Downloads/NotebookLM/，使用中文文件名，生成后自动打开文件夹。',title:'多源内容 → NotebookLM 智能处理器',cat:'内容处理与知识管理',linked:false},
+  {name:'baoyu-article-illustrator',desc:'分析文章结构并识别需要视觉辅助的位置，通过"类型×风格"的二维方式生成插图。适用于用户要求"为文章配图""添加图片""生成文章插图"等场景。',title:'Article Illustrator',cat:'图像与视觉生成',linked:true},
+  {name:'baoyu-comic',desc:'知识漫画创作工具，支持多种画风与基调组合，可生成带详细分镜和顺序出图的原创教育漫画。适用于"知识漫画""教育漫画""传记漫画""教程漫画"等需求。',title:'Knowledge Comic Creator',cat:'图像与视觉生成',linked:true},
+  {name:'baoyu-compress-image',desc:'将图片压缩为WebP（默认）或PNG，并自动选择最合适的处理工具。适用于"压缩图片""优化图片""转成webp"或减小图片体积等需求。',title:'Image Compressor',cat:'图像与视觉处理',linked:true},
+  {name:'baoyu-cover-image',desc:'生成文章封面图，支持类型、配色、渲染、文字、情绪五个维度，可输出电影宽屏、16:9和1:1等比例。适用于"生成封面图""制作文章封面"等需求。',title:'Cover Image Generator',cat:'图像与视觉生成',linked:true},
+  {name:'baoyu-format-markdown',desc:'格式化纯文本或Markdown文件，补充frontmatter、标题、摘要、标题层级、粗体、列表和代码块等结构。适用于"格式化markdown""美化文章""补排版"等需求，输出为{filename}-formatted.md。',title:'Markdown Formatter',cat:'文档与格式转换',linked:true},
+  {name:'baoyu-image-gen',desc:'基于OpenAI、Azure OpenAI、Google、OpenRouter、DashScope、Jimeng、Seedream和Replicate等API进行AI生图。支持文生图、参考图、比例控制和从已保存提示词批量生成。适用于用户要求生成、创建或绘制图片的场景。',title:'Image Generation (AI SDK)',cat:'图像与视觉生成',linked:true},
+  {name:'baoyu-infographic',desc:'生成专业信息图，支持21种布局和20种视觉风格。会分析内容、推荐布局与风格组合，并输出可直接发布的信息图。适用于"信息图""可视化""视觉总结""高密度信息大图"等需求。',title:'Infographic Generator',cat:'图像与视觉生成',linked:true},
+  {name:'baoyu-markdown-to-html',desc:'将Markdown转换为带样式的HTML，并兼容微信主题。支持代码高亮、数学公式、PlantUML、脚注、提示块、信息图以及外链转底部引用等能力。适用于"md转html"等需求。',title:'Markdown to HTML Converter',cat:'文档与格式转换',linked:true},
+  {name:'baoyu-post-to-wechat',desc:'通过API或Chrome CDP将内容发布到微信公众号。支持以HTML、Markdown或纯文本发布文章，也支持多图贴图/图文发布；Markdown文章会默认将普通外链转为适合微信的底部引用。适用于"发布公众号""发微信公众号文章"等需求。',title:'Post to WeChat Official Account',cat:'内容发布',linked:true},
+  {name:'baoyu-post-to-x',desc:'将内容和文章发布到X（Twitter）。支持带图片/视频的普通帖子以及长篇Markdown文章，并通过真实Chrome+CDP流程执行。适用于"post to X""tweet""发布到Twitter/X"等需求。',title:'Post to X (Twitter)',cat:'内容发布',linked:true},
+  {name:'baoyu-slide-deck',desc:'根据内容生成专业幻灯片图片。会先创建带风格说明的大纲，再逐页生成幻灯片图像。适用于"创建slides""生成deck""制作PPT"这类需求。',title:'Slide Deck Generator',cat:'演示与幻灯片',linked:true},
+  {name:'baoyu-translate',desc:'提供quick（直译）、normal（分析后翻译）和refined（分析、翻译、审校、润色）三种文档翻译模式，并支持通过EXTEND.md配置术语表与术语一致性。适用于翻译文章、文档、本地化内容等需求。',title:'Translator',cat:'翻译与本地化',linked:true},
+  {name:'baoyu-url-to-markdown',desc:'通过Chrome CDP抓取任意URL并转换为Markdown，同时保存渲染后的HTML快照。内置升级版Defuddle管线，并在需要时回退到旧版HTML转Markdown流程；对需登录页面还支持等待用户确认后再抓取。适用于"保存网页为markdown"等需求。',title:'URL to Markdown',cat:'网页抓取与转换',linked:true},
+  {name:'baoyu-xhs-images',desc:'生成适用于小红书（Little Red Book）的信息图系列图，支持11种视觉风格和8种布局，可将内容拆成1到10张适合平台传播的卡通风格图片。适用于"小红书图片""RedNote信息图"等需求。',title:'Xiaohongshu Infographic Series Generator',cat:'图像与视觉生成',linked:true},
+  {name:'baoyu-youtube-transcript',desc:'按URL或视频ID下载YouTube视频字幕/转录文本和封面图。支持多语言、翻译、章节、说话人识别，并缓存原始数据以便快速重新格式化。适用于提取YouTube字幕、封面或转录内容等需求。',title:'YouTube Transcript',cat:'音视频下载与转写',linked:true},
+  {name:'bilibili-downloader-transcriber',desc:'用户给出B站视频链接时，自动下载视频或音频，优先尝试获取字幕，失败时自动本地转写，输出mp4/mp3/txt/srt/元信息文件，并可按需导入NotebookLM。',title:'B站视频下载与转写工具',cat:'音视频下载与转写',linked:false},
+  {name:'find-skills',desc:'当用户提出"怎么做X""找一个做X的skill""有没有skill能做这个"之类问题，帮助发现并安装可用的agentskills。适用于用户希望扩展能力或寻找现成技能的场景。',title:'Find Skills',cat:'Skills生态',linked:true},
+  {name:'github',desc:'使用ghCLI与GitHub交互，可处理issue、PR、CI运行记录以及高级API查询等任务。',title:'GitHub Skill',cat:'Git / GitHub',linked:true},
+  {name:'release-skills',desc:'通用发布工作流，可自动检测版本文件和changelog，支持Node.js、Python、Rust、ClaudePlugin以及通用项目。适用于"发布""新版本""升级版本号""推送"这类需求。',title:'Release Skills',cat:'发布与版本管理',linked:true},
+  {name:'summarize',desc:'使用summarizeCLI总结URL或文件内容，支持网页、PDF、图片、音频和YouTube。',title:'Summarize',cat:'总结与提取',linked:true},
+  {name:'xiaoyuzhou-podcast-downloader',desc:'当用户提供小宇宙单集链接时，提取标题节目名主理人shownotes发布时间时长等元信息，下载音频到~/Downloads/Xiaoyuzhou/，并在需要时生成转写TXT/SRT。',title:'小宇宙播客单集下载与提取工具',cat:'音视频下载与转写',linked:false},
+  {name:'update-config',desc:'用于通过settings.json配置ClaudeCodeharness。对于"以后每次X时""每次执行前后做Y"这类自动化行为，需要通过hooks配置，由harness执行而不是Claude本身执行。',title:'Update Config',cat:'配置与自动化',linked:false},
+  {name:'keybindings-help',desc:'用于自定义键盘快捷键、重绑按键、添加组合键，或修改~/.claude/keybindings.json。',title:'Keybindings Help',cat:'配置与自动化',linked:false},
+  {name:'simplify',desc:'审查已修改代码的复用性、质量和效率，并修复发现的问题。',title:'Simplify',cat:'代码质量',linked:false},
+  {name:'loop',desc:'按固定间隔重复运行一个prompt或slashcommand，适合轮询状态、定时检查任务或周期性执行命令。',title:'Loop',cat:'配置与自动化',linked:false},
+  {name:'schedule',desc:'创建、更新、列出或运行按cron调度的远程agents/triggers。适用于设置定时远程任务。',title:'Schedule',cat:'配置与自动化',linked:false},
+  {name:'claude-api',desc:'用于基于ClaudeAPI、AnthropicSDK或AgentSDK构建应用。当代码导入anthropic、@anthropic-ai/sdk、claude_agent_sdk，或用户询问相关用法时适用。',title:'Claude API',cat:'Claude / API 开发',linked:false},
+  {name:'agent-browser',desc:'面向AIagents的浏览器自动化CLI。适用于打开网站、导航页面、填写表单、点击按钮、截图、提取页面数据、测试Web应用或其他浏览器自动化任务。',title:'Browser Automation with agent-browser',cat:'浏览器与网页',linked:false},
+  {name:'frontend-slides',desc:'从零创建富动画HTML演示文稿，或把PowerPoint/PPTX转成网页演示。适用于制作幻灯片、演讲稿或pitchdeck。',title:'Frontend Slides Skill',cat:'演示与幻灯片',linked:false},
+  {name:'image-assistant',desc:'把文章或模块内容整理成统一风格、少字高可读的16:9信息图提示词；先规划需要几张图和每张图讲什么，再压缩文案与隐喻，最终输出可直接复制的生图提示词并迭代。',title:'配图助手',cat:'图像与视觉生成',linked:false},
+  {name:'my-skill',desc:'通用改动执行模板（目录门禁版）。用于在开始改代码前先确认运行时加载目录，再执行小步改动与固定回归，避免"改了但没生效"。',title:'My Skill (目录门禁+小步回归)',cat:'开发工作流',linked:false},
+  {name:'opencli-skill',desc:'使用opencliCLI借助用户Chrome登录态操作社交与内容网站（如Bilibili、知乎、Twitter/X、YouTube、微博、小红书、V2EX、Reddit、HackerNews等）。对于此类站点任务，优先使用opencli而不是浏览器自动化。',title:'opencli',cat:'浏览器与网页',linked:false},
+  {name:'pdf2word',desc:'将PDF文档转换为Word文档，并尽量保留图片和原始格式。',title:'PDF to Word',cat:'文档与格式转换',linked:false},
+  {name:'pptx',desc:'凡是涉及.pptx文件的场景都优先使用这个skill，包括创建、读取、解析、提取文本、编辑、更新、合并、拆分、处理模板、布局、讲者备注或评论等。',title:'PPTX Skill',cat:'演示与幻灯片',linked:false},
+  {name:'prd-doc-writer',desc:'以故事驱动和严格分阶段确认的方式编写和迭代PRD/需求文档。适用于梳理需求文档、用户故事、验收标准，并结合ASCII线框图与Mermaid降低歧义。',title:'PRD文档梳理提示词',cat:'产品与文档',linked:false},
+  {name:'prompt-writer',desc:'编写结构化提示词模板，并通过分步单问对话引导用户完善提示词。适用于"写/设计/优化Prompt"等需求。',title:'Prompt Writer',cat:'提示词与内容创作',linked:false},
+  {name:'req-change-workflow',desc:'将现有代码库中的需求/功能变更标准化为可重复流程，尤其适用于Chrome扩展。会先澄清验收标准、确认当前行为、评估影响和风险，再设计实施方案。',title:'Req Change Workflow',cat:'开发工作流',linked:false},
+  {name:'skill-creator',desc:'用于创建新skills、修改和改进现有skills，并衡量skil效果。适用于从零创建skill、优化skill、跑评测和提升触发准确率。',title:'Skill Creator',cat:'Skills生态',linked:false},
+  {name:'thought-mining',desc:'通过对话帮助用户把脑中的零散想法倒出来、记录下来并整理成文章，覆盖从思维挖掘到成稿的完整流程。',title:'思维挖掘助手',cat:'提示词与内容创作',linked:false},
+  {name:'ui-design-optimizer',desc:'基于AntDesign设计原则提供UI设计评审、组件选型建议、交互优化指导和视觉一致性检查。适用于UI设计评审、界面优化建议和设计规范检查。',title:'UI设计优化助手',cat:'设计与体验',linked:false},
+  {name:'youtube-clipper',desc:'YouTube视频智能剪辑工具。下载视频和字幕，AI分析生成精细章节，用户选择片段后自动剪辑、翻译为中英双语字幕、烧录字幕到视频，并生成总结文案。',title:'YouTube视频智能剪辑工具',cat:'音视频处理',linked:false},
+  {name:'zcf:git-rollback',desc:'交互式回滚Git分支到历史版本；列出分支和版本后，经二次确认执行reset或revert。',title:'Git Rollback',cat:'Git / GitHub',linked:false},
+  {name:'zcf:git-cleanBranches',desc:'安全查找并清理已合并或过期的Git分支，支持dry-run与自定义基准/保护分支。',title:'Git Clean Branches',cat:'Git / GitHub',linked:false},
+  {name:'zcf:git-commit',desc:'仅用Git分析改动并自动生成conventionalcommit信息（可选emoji）；必要时建议拆分提交，默认运行本地Git钩子。',title:'Git Commit',cat:'Git / GitHub',linked:false},
+  {name:'zcf:init-project',desc:'初始化项目AI上下文，生成或更新根级与模块级CLAUDE.md索引。',title:'Init Project',cat:'开发工作流',linked:false},
+  {name:'zcf:feat',desc:'用于新增功能开发的命令，支持完整开发流程和工具集成。',title:'Feature Workflow',cat:'开发工作流',linked:false},
+  {name:'zcf:workflow',desc:'专业AI编程助手工作流，提供结构化六阶段开发流程：研究、构思、计划、执行、优化、评审。',title:'Workflow',cat:'开发工作流',linked:false},
+  {name:'zcf:bmad-init',desc:'/bmad-init命令对应的skill。',title:'BMAD Init',cat:'开发工作流',linked:false},
+  {name:'zcf:git-worktree',desc:'管理Gitworktree，在项目平级的../.zcf/项目名/目录下创建，支持智能默认、IDE集成和内容迁移。',title:'Git Worktree',cat:'Git / GitHub',linked:false},
+];
+
+// 离线 fallback：补充 sources 字段
+skills.forEach(s => { if (!s.sources) s.sources = ['ClaudeCode']; });
+
+// ── API Base ──
+const API_BASE = '';
+async function api(endpoint, options = {}) {
+  try {
+    const res = await fetch(API_BASE + endpoint, {
+      ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    });
+    if (!res.ok) throw new Error('API error: ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('API call failed, using local data:', e.message);
+    return null;
+  }
+}
+
+// ── Reload / Load ──
+async function reloadSkills() {
+  const btn = document.getElementById('reloadBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span> 解析中…';
+
+  // Try server-side reload first
+  const result = await api('/api/reload', { method: 'POST' });
+
+  if (result && result.skills) {
+    // server returned fresh data
+    skills.length = 0; skills.push(...result.skills);
+    document.getElementById('updateDate').textContent = result.date || todayStr();
+    renderFilters();
+    render();
+    renderCharts();
+    animateProgress();
+    showToast('✅ 数据已更新，共 ' + skills.length + ' 个 skill', 'success');
+  } else {
+    // fallback: local reload with today's date
+    document.getElementById('updateDate').textContent = todayStr();
+    render();
+    showToast('⚠️ 仅刷新显示，请运行 /skills-dashboard 加载最新数据', 'warning');
+  }
+
+  btn.classList.remove('loading');
+  btn.innerHTML = '🔄 加载最新';
+}
+
+// ── Export CSV ──
+function exportCSV() {
+  const headers = ['skill名称', '描述', '标题', '分类', '来源'];
+  const rows = skills.map(s => [
+    s.name, s.desc, s.title, s.cat, s.source || ''
+  ]);
+  const csvContent = [headers, ...rows]
+    .map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))
+    .join('\n');
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'skills-inventory-' + todayStr() + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 CSV 已导出', 'success');
+}
+
+// ── Toast ──
+function showToast(msg, type = 'info') {
+  const colors = { success: '#10b981', warning: '#f59e0b', info: '#6366f1' };
+  const bg = colors[type] || colors.info;
+  const el = document.createElement('div');
+  el.style.cssText = [
+    'position:fixed', 'bottom:24px', 'right:24px',
+    'background:' + bg, 'color:#fff',
+    'padding:10px 18px', 'border-radius:10px',
+    'font-size:13px', 'font-weight:500',
+    'box-shadow:0 4px 12px rgba(0,0,0,.2)',
+    'z-index:9999', 'pointer-events:none',
+    'animation:slideUp .3s ease',
+  ].join(';');
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity .3s';
+    setTimeout(() => el.remove(), 300);
+  }, 2500);
+}
+const styleEl = document.createElement('style');
+styleEl.textContent = '@keyframes slideUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}';
+document.head.appendChild(styleEl);
+
+// ── Date helper ──
+function todayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+// ── Theme ──
+function toggleTheme() {
+  const html = document.documentElement;
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    html.removeAttribute('data-theme');
+    document.getElementById('themeBtn').innerHTML = '🌙 深色模式';
+    localStorage.setItem('skill-dash-theme', 'light');
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').innerHTML = '☀️ 浅色模式';
+    localStorage.setItem('skill-dash-theme', 'dark');
+  }
+  // re-init charts with current theme
+  renderCharts();
+}
+function applyTheme() {
+  const saved = localStorage.getItem('skill-dash-theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.getElementById('themeBtn').innerHTML = '☀️ 浅色模式';
+  }
+}
+
+// ── State ──
+let activeCat = null;
+let activeStatus = 'all';
+let activeSources = new Set(['all']); // multi-select
+let search = '';
+
+// ── Init ──
+function init() {
+  applyTheme();
+  renderFilters();
+  render();
+  renderCharts();
+  animateProgress();
+}
+
+function renderFilters() {
+  const cats = {};
+  skills.forEach(s => { cats[s.cat] = (cats[s.cat]||0)+1; });
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const el = document.getElementById('catFilters');
+  el.innerHTML = `<span class="filter-tag active" data-cat="all" onclick="filterByCat(this)">全部<span class="count">${skills.length}</span></span>` +
+    sorted.map(([cat,cnt])=>`<span class="filter-tag" data-cat="${cat}" onclick="filterByCat(this)">${cat}<span class="count">${cnt}</span></span>`).join('');
+}
+
+function filterByCat(el) {
+  if (!el) { activeCat = null; }
+  else if (el.dataset.cat === 'all') { activeCat = null; }
+  else { activeCat = el.dataset.cat; }
+  document.querySelectorAll('#catFilters .filter-tag').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  render();
+}
+
+function setStatus(el) {
+  activeStatus = el.dataset.status;
+  document.querySelectorAll('[data-status]').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+// ── Source filter (multi-select) ──
+const SOURCE_COLORS = {
+  ClaudeCode: '#6366f1',
+  Agent: '#10b981',
+  Codex: '#f59e0b',
+};
+function toggleSource(el) {
+  const src = el.dataset.source;
+  if (src === 'all') {
+    activeSources = new Set(['all']);
+    document.querySelectorAll('#sourceFilters .filter-tag').forEach(t => {
+      t.classList.toggle('active', t.dataset.source === 'all');
+    });
+  } else {
+    activeSources.delete('all');
+    if (activeSources.has(src)) {
+      activeSources.delete(src);
+      el.classList.remove('active');
+    } else {
+      activeSources.add(src);
+      el.classList.add('active');
+    }
+    if (activeSources.size === 0) {
+      activeSources.add('all');
+      document.querySelector('#sourceFilters .filter-tag[data-source="all"]').classList.add('active');
+    }
+  }
+  render();
+}
+
+function render() {
+  search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const q = search;
+  const filtered = skills.filter(s => {
+    const matchCat = !activeCat || s.cat === activeCat;
+    const matchStatus = activeStatus === 'all' || (activeStatus === 'linked' && s.linked) || (activeStatus === 'unlinked' && !s.linked);
+    const matchSrc = activeSources.has('all') || (s.sources || []).some(src => activeSources.has(src));
+    const matchSearch = !q || s.name.includes(q) || s.desc.includes(q) || s.title.includes(q) || (s.source || '').includes(q);
+    return matchCat && matchStatus && matchSrc && matchSearch;
+  });
+
+  const tbody = document.getElementById('skillTable');
+  const empty = document.getElementById('emptyState');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  tbody.innerHTML = filtered.map(s => {
+    const srcBadges = (s.sources || []).map(src => {
+      const c = SOURCE_COLORS[src] || '#64748b';
+      return `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:500;background:${c}22;color:${c};border:1px solid ${c}44;">${src}</span>`;
+    }).join(' ');
+    return `
+    <tr>
+      <td><span class="skill-name" onclick="openDrawer('${s.name}')">${s.name}</span></td>
+      <td>${srcBadges || '—'}</td>
+      <td><span class="badge badge-cat">${s.cat}</span></td>
+      <td>${s.linked ? '<span class="badge badge-linked" data-tip="已接入 ~/.claude/skills/">✅ 已接入</span>' : '<span class="badge badge-unlinked" data-tip="系统内置">⚙️ 系统内置</span>'}</td>
+      <td><span class="badge-desc" title="${s.desc.replace(/"/g,'&quot;')}">${s.desc.substring(0,80)}${s.desc.length>80?'…':''}</span></td>
+      <td><button class="btn-detail" onclick="openDrawer('${s.name}')">详情 →</button></td>
+    </tr>
+  `}).join('');
+}
+
+function openDrawer(name) {
+  const s = skills.find(x => x.name === name);
+  if (!s) return;
+  document.getElementById('drawer-name').textContent = s.name;
+  document.getElementById('drawer-title').textContent = s.title;
+  document.getElementById('drawer-body').innerHTML = `
+    <div class="drawer-section">
+      <h4>基本信息</h4>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="meta-item">
+          <div class="meta-label">来源</div>
+          <div class="meta-value">${(s.sources || []).map(src => `<span style="color:${SOURCE_COLORS[src] || '#64748b'}">${src}</span>`).join(', ') || '—'}</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">接入状态</div>
+          <div class="meta-value">${s.linked ? '✅ 已接入' : '⚙️ 系统内置'}</div>
+        </div>
+        <div class="meta-item" style="grid-column:1/-1;">
+          <div class="meta-label">功能分类</div>
+          <div class="meta-value"><span class="badge badge-cat">${s.cat}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-section">
+      <h4>完整描述</h4>
+      <p>${s.desc}</p>
+    </div>
+    <div class="drawer-section">
+      <h4>标题</h4>
+      <p style="font-weight:600;">${s.title}</p>
+    </div>
+    <div class="drawer-section">
+      <h4>调用方式</h4>
+      <p style="font-family:monospace;background:#f8fafc;padding:10px 14px;border-radius:8px;font-size:13px;">/${s.name}</p>
+    </div>
+  `;
+  document.getElementById('drawerOverlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrawer() {
+  document.getElementById('drawerOverlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+// ── Charts ──
+function renderCharts() {
+  const cats = {};
+  skills.forEach(s => { cats[s.cat] = (cats[s.cat]||0)+1; });
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const COLORS = [
+    '#6366f1','#8b5cf6','#ec4899','#f43f5e','#f97316',
+    '#eab308','#22c55e','#14b8a6','#06b6d4','#3b82f6',
+    '#a855f7','#f59e0b','#10b981','#64748b','#78716c',
+    '#84cc16','#fb923c','#a78bfa','#2dd4bf','#818cf8','#fb7185'
+  ];
+  const gridColor = isDark ? '#334155' : '#f1f5f9';
+  const tickColor = isDark ? '#94a3b8' : '#64748b';
+
+  // destroy old charts before re-creating
+  ['barChart','pieChart'].forEach(id => {
+    const c = Chart.getChart(id);
+    if (c) c.destroy();
+  });
+
+  // Bar chart
+  new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(([k]) => k.length > 8 ? k.substring(0,8)+'…' : k),
+      datasets: [{
+        label: '数量',
+        data: sorted.map(([,v]) => v),
+        backgroundColor: sorted.map((_,i) => COLORS[i % COLORS.length] + (isDark ? 'dd' : 'cc')),
+        borderColor: sorted.map((_,i) => COLORS[i % COLORS.length]),
+        borderWidth: 1,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => sorted[items[0].dataIndex][0],
+            label: (item) => ` ${item.raw} 个`
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11, color: tickColor } }, grid: { color: gridColor } },
+        x: { ticks: { font: { size: 10, color: tickColor }, maxRotation: 30 }, grid: { display: false } }
+      }
+    }
+  });
+
+  // Pie chart — source distribution (each skill counts once per source it belongs to)
+  const bySource = { ClaudeCode: 0, Agent: 0, Codex: 0 };
+  skills.forEach(s => { (s.sources || []).forEach(src => { if (bySource[src] !== undefined) bySource[src]++; }); });
+  const srcColors = ['#6366f1', '#10b981', '#f59e0b'];
+  const srcLabels = Object.keys(bySource).filter(k => bySource[k] > 0);
+  const srcData = srcLabels.map(k => bySource[k]);
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: srcLabels,
+      datasets: [{
+        data: srcData,
+        backgroundColor: srcLabels.map((_, i) => srcColors[i] + (isDark ? 'dd' : 'cc')),
+        borderColor: srcLabels.map((_, i) => srcColors[i]),
+        borderWidth: 2,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 12, color: tickColor }, padding: 16, usePointStyle: true, pointStyleWidth: 10 } },
+        tooltip: { callbacks: { label: (item) => ` ${item.label}: ${item.raw} 个 (${(item.raw/skills.length*100).toFixed(0)}%)` } }
+      }
+    }
+  });
+}
+
+// ── Progress Bar ──
+function animateProgress() {
+  const linked = skills.filter(s => s.linked).length;
+  const total = skills.length;
+  const rate = Math.round(linked / total * 100);
+
+  // per-source counts
+  const bySource = { ClaudeCode: 0, Agent: 0, Codex: 0 };
+  skills.forEach(s => { (s.sources || []).forEach(src => { if (bySource[src] !== undefined) bySource[src]++; }); });
+
+  document.getElementById('stat-rate').textContent = rate + '%';
+  document.getElementById('stat-linked').textContent = linked;
+  document.getElementById('stat-linked2').textContent = linked;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-total2').textContent = total;
+  document.getElementById('stat-unlinked').textContent = total - linked;
+  document.getElementById('stat-unlinked2').textContent = total - linked;
+  document.getElementById('stat-sources').textContent = Object.values(bySource).filter(v => v > 0).length;
+
+  // update source stat card label
+  const srcCard = document.querySelector('.stat-card[data-source-stats]');
+  if (srcCard) {
+    const dot = (label, color) => `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:${color};">
+      <span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;"></span>${label} ${bySource[label] || 0}
+    </span>`;
+    srcCard.querySelector('.source-stats').innerHTML =
+      dot('ClaudeCode', '#6366f1') + ' &nbsp;' +
+      dot('Agent', '#10b981') + ' &nbsp;' +
+      dot('Codex', '#f59e0b');
+  }
+
+  // animate width
+  requestAnimationFrame(() => {
+    document.getElementById('progressFill').style.width = rate + '%';
+  });
+}
+
+init();
+</script>
+</body>
+</html>
