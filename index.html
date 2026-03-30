@@ -629,8 +629,8 @@
         <th>Skill 名称</th>
         <th>来源</th>
         <th>分类</th>
-        <th>字符数</th>
-        <th>Token</th>
+        <th title="名称 + 描述的字符总数">字符数</th>
+        <th title="名称÷4 + 描述÷2，估算每次调用消耗的 Token 数">Token</th>
         <th>接入状态</th>
         <th>描述</th>
         <th>操作</th>
@@ -965,11 +965,11 @@ function openDrawer(name) {
         </div>
         <div class="meta-item">
           <div class="meta-label">字符数</div>
-          <div class="meta-value">${s.charCount}</div>
+          <div class="meta-value">${s.charCount} <span style="font-size:11px;color:var(--text-muted);">（名称 + 描述）</span></div>
         </div>
         <div class="meta-item">
           <div class="meta-label">Token 估算</div>
-          <div class="meta-value">${s.tokenEst || Math.ceil(s.name.length/4 + (s.desc||'').length/2)}</div>
+          <div class="meta-value">${s.tokenEst || Math.ceil(s.name.length/4 + (s.desc||'').length/2)} <span style="font-size:11px;color:var(--text-muted);">（名称÷4 + 描述÷2）</span></div>
         </div>
       </div>
     </div>
