@@ -260,13 +260,15 @@ function collectSkills() {
       const skillMD = join(full, 'SKILL.md');
       const info = parseSKILLMD(skillMD);
       const name = entry;
+      const desc = DESC_MAP[name] || info?.desc || '';
       skills.push({
         name,
-        desc: DESC_MAP[name] || info?.desc || '',
+        desc,
         title: TITLE_MAP[name] || info?.heading || name,
         cat: CATEGORY_MAP[name] || '未分类',
         linked: LINKED_SKILLS.has(name),
         sources: [source],
+        charCount: name.length + desc.length,
       });
     }
   }
@@ -298,9 +300,9 @@ function escapeCSV(v) {
 
 function generateCSV(skills) {
   const date = todayStr();
-  const lines = ['skill名称,描述,标题,分类,来源'];
+  const lines = ['skill名称,描述,标题,分类,来源,字符数'];
   for (const s of skills) {
-    lines.push([s.name, s.desc, s.title, s.cat, s.sources.join(', ')].map(escapeCSV).join(','));
+    lines.push([s.name, s.desc, s.title, s.cat, s.sources.join(', '), s.charCount].map(escapeCSV).join(','));
   }
   return { csv: lines.join('\n'), date };
 }
