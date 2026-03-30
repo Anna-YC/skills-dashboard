@@ -13,7 +13,7 @@ Claude Code / Agent / Codex Skills 可视化管理面板。
 
 > **Why — 解决"看不见、管不住、用不上"的问题**
 
-你装了 几十个 个 skill，用的时候却经常想不起来：
+装了几十个skill，用的时候却经常想不起来：
 - **有没有现成的 skill 能做这件事？**
 - **这个 skill 在哪个平台（Claude Code / Agent / Codex）能用？**
 - **哪些 skill 还没接入，只是躺在文件夹里？**
