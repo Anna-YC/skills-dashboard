@@ -247,13 +247,77 @@ function parseSKILLMD(filePath) {
   }
 }
 
+// ── 调用统计 ──────────────────────────────────────────────────
+function findJsonlFiles(dir, results = []) {
+  if (!existsSync(dir)) return results;
+  for (const entry of readdirSync(dir)) {
+    if (entry === '.DS_Store') continue;
+    const full = join(dir, entry);
+    const stat = statSync(full);
+    if (stat.isDirectory()) {
+      findJsonlFiles(full, results);
+    } else if (entry.endsWith('.jsonl')) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
+function collectUsage() {
+  // 遍历 ~/.claude/projects/ 下所有 .jsonl 文件
+  const projectsDir = resolve(HOME, '.claude/projects');
+  const files = findJsonlFiles(projectsDir);
+  // 也检查顶层
+  const topJsonl = resolve(HOME, '.claude/history.jsonl');
+  if (existsSync(topJsonl) && !files.includes(topJsonl)) files.push(topJsonl);
+
+  const counts = new Map();   // skillName → invokeCount
+  const lastUsed = new Map(); // skillName → ISO date string
+
+  const skillPattern = /"name"\s*:\s*"Skill"\s*,\s*"input"\s*:\s*\{[^}]*"skill"\s*:\s*"([^"]+)"/g;
+  const timestampPattern = /"timestamp"\s*:\s*"([^"]+)"/g;
+
+  for (const file of files) {
+    try {
+      const content = readFileSync(file, 'utf-8');
+      const lines = content.split('\n');
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+
+        // 提取 timestamp（靠近 skill 调用的那个）
+        let ts = null;
+        timestampPattern.lastIndex = 0;
+        const tsMatch = timestampPattern.exec(line);
+        if (tsMatch) ts = tsMatch[1];
+
+        skillPattern.lastIndex = 0;
+        let match;
+        while ((match = skillPattern.exec(line)) !== null) {
+          const skillName = match[1].trim();
+          counts.set(skillName, (counts.get(skillName) || 0) + 1);
+          if (ts && (!lastUsed.get(skillName) || ts > lastUsed.get(skillName))) {
+            lastUsed.set(skillName, ts.slice(0, 10)); // YYYY-MM-DD
+          }
+        }
+      }
+    } catch (e) {
+      // ignore unreadable files
+    }
+  }
+
+  return { counts, lastUsed };
+}
+
 function collectSkills() {
+  // 先收集调用统计
+  const { counts: invokeCounts, lastUsed } = collectUsage();
+
   const skills = [];
 
   for (const { dir, source } of skillDirs) {
     if (!existsSync(dir)) continue;
     for (const entry of readdirSync(dir)) {
-      // skip hidden dirs, .DS_Store, and meta dirs
       if (entry.startsWith('.') || entry === '.DS_Store') continue;
       const full = join(dir, entry);
       if (!statSync(full).isDirectory()) continue;
@@ -270,11 +334,13 @@ function collectSkills() {
         sources: [source],
         charCount: name.length + desc.length,
         tokenEst: Math.ceil(name.length / 4 + desc.length / 2),
+        invokeCount: invokeCounts.get(name) || 0,
+        lastUsed: lastUsed.get(name) || null,
       });
     }
   }
 
-  // 按名称聚合：合并 sources 数组
+  // 按名称聚合
   const map = new Map();
   for (const s of skills) {
     if (map.has(s.name)) {
@@ -283,6 +349,11 @@ function collectSkills() {
         if (!existing.sources.includes(src)) existing.sources.push(src);
       }
       if (s.linked) existing.linked = true;
+      // 累加调用次数（多平台）
+      existing.invokeCount = (existing.invokeCount || 0) + (s.invokeCount || 0);
+      if (s.lastUsed && (!existing.lastUsed || s.lastUsed > existing.lastUsed)) {
+        existing.lastUsed = s.lastUsed;
+      }
     } else {
       map.set(s.name, s);
     }
@@ -301,9 +372,16 @@ function escapeCSV(v) {
 
 function generateCSV(skills) {
   const date = todayStr();
-  const lines = ['skill名称,描述,标题,分类,来源,字符数,token估算'];
+  const lines = ['skill名称,描述,标题,分类,来源,字符数,token估算,调用次数,最近使用'];
   for (const s of skills) {
-    lines.push([s.name, s.desc, s.title, s.cat, s.sources.join(', '), s.charCount, s.tokenEst].map(escapeCSV).join(','));
+    lines.push([
+      s.name, s.desc, s.title, s.cat,
+      s.sources.join(', '),
+      s.charCount,
+      s.tokenEst,
+      s.invokeCount || 0,
+      s.lastUsed || ''
+    ].map(escapeCSV).join(','));
   }
   return { csv: lines.join('\n'), date };
 }

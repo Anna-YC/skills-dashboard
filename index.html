@@ -631,6 +631,7 @@
         <th>分类</th>
         <th title="名称 + 描述的字符总数">字符数</th>
         <th title="名称÷4 + 描述÷2，估算每次调用消耗的 Token 数">Token</th>
+        <th title="Claude Code 对话历史中记录的实际调用次数（仅 ClaudeCode 来源）">调用</th>
         <th>接入状态</th>
         <th>描述</th>
         <th>操作</th>
@@ -761,9 +762,9 @@ async function reloadSkills() {
 
 // ── Export CSV ──
 function exportCSV() {
-  const headers = ['skill名称', '描述', '标题', '分类', '来源', '字符数', 'token估算'];
+  const headers = ['skill名称', '描述', '标题', '分类', '来源', '字符数', 'token估算', '调用次数', '最近使用'];
   const rows = skills.map(s => [
-    s.name, s.desc, s.title, s.cat, (s.sources || []).join(', '), s.charCount || 0, s.tokenEst || 0
+    s.name, s.desc, s.title, s.cat, (s.sources || []).join(', '), s.charCount || 0, s.tokenEst || 0, s.invokeCount || 0, s.lastUsed || ''
   ]);
   const csvContent = [headers, ...rows]
     .map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(','))
@@ -935,6 +936,7 @@ function render() {
       <td><span class="badge badge-cat">${s.cat}</span></td>
       <td><span style="font-size:12px;color:var(--text-muted);">${s.charCount || (s.name.length + (s.desc || '').length)}</span></td>
       <td><span style="font-size:12px;color:var(--text-muted);">${s.tokenEst || Math.ceil(s.name.length/4 + (s.desc||'').length/2)}</span></td>
+      <td><span style="font-size:12px;${(s.invokeCount||0)>0?'color:var(--success);font-weight:600':';color:var(--text-muted)'};">${s.invokeCount||0}</span></td>
       <td>${s.linked ? '<span class="badge badge-linked" data-tip="已接入 ~/.claude/skills/">✅ 已接入</span>' : '<span class="badge badge-unlinked" data-tip="系统内置">⚙️ 系统内置</span>'}</td>
       <td><span class="badge-desc" title="${s.desc.replace(/"/g,'&quot;')}">${s.desc.substring(0,80)}${s.desc.length>80?'…':''}</span></td>
       <td><button class="btn-detail" onclick="openDrawer('${s.name}')">详情 →</button></td>
@@ -970,6 +972,10 @@ function openDrawer(name) {
         <div class="meta-item">
           <div class="meta-label">Token 估算</div>
           <div class="meta-value">${s.tokenEst || Math.ceil(s.name.length/4 + (s.desc||'').length/2)} <span style="font-size:11px;color:var(--text-muted);">（名称÷4 + 描述÷2）</span></div>
+          <div class="meta-label">调用次数</div>
+          <div class="meta-value" style="${(s.invokeCount||0)>0?'color:var(--success);font-weight:600':''}">${s.invokeCount||0} <span style="font-size:11px;color:var(--text-muted);font-weight:400;">次</span></div>
+          <div class="meta-label">最近使用</div>
+          <div class="meta-value">${s.lastUsed || '—'}</div>
         </div>
       </div>
     </div>
