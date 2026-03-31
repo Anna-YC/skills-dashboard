@@ -7,41 +7,43 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
-    --bg: #f0f4f8;
-    --card: #ffffff;
-    --primary: #0891b2;
-    --primary-light: #cffafe;
+    --bg: #F5F5F3;
+    --card: #FFFFFF;
+    --card-hover: #FAFAFA;
+    --primary: #D97706;
+    --primary-dim: rgba(217,119,6,.08);
     --success: #059669;
-    --success-light: #d1fae5;
-    --warning: #d97706;
-    --warning-light: #fef3c7;
-    --danger: #dc2626;
-    --danger-light: #fee2e2;
-    --text: #0f172a;
-    --text-muted: #64748b;
-    --border: #cbd5e1;
+    --success-dim: rgba(5,150,105,.08);
+    --warning: #D97706;
+    --warning-dim: rgba(217,119,6,.08);
+    --danger: #DC2626;
+    --danger-dim: rgba(220,38,38,.08);
+    --text: #111827;
+    --text-muted: #6B7280;
+    --border: #E5E5E3;
     --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
     --shadow-lg: 0 8px 24px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04);
     --radius: 12px;
-    --accent-bar: #0891b2;
+    --accent-bar: #D97706;
   }
   [data-theme="dark"] {
-    --bg: #0c1220;
-    --card: #151e2d;
-    --primary: #22d3ee;
-    --primary-light: rgba(34,211,238,.12);
-    --success: #34d399;
-    --success-light: rgba(52,211,153,.1);
-    --warning: #fbbf24;
-    --warning-light: rgba(251,191,36,.1);
-    --danger: #f87171;
-    --danger-light: rgba(248,113,113,.1);
-    --text: #e2e8f0;
-    --text-muted: #94a3b8;
-    --border: #1e3048;
-    --shadow: 0 2px 8px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
-    --shadow-lg: 0 8px 32px rgba(0,0,0,.5), 0 2px 8px rgba(0,0,0,.3);
-    --accent-bar: #22d3ee;
+    --bg: #0D0D0D;
+    --card: #181818;
+    --card-hover: #1E1E1E;
+    --primary: #E8A838;
+    --primary-dim: rgba(232,168,56,.12);
+    --success: #4ADE80;
+    --success-dim: rgba(74,222,128,.1);
+    --warning: #FBBF24;
+    --warning-dim: rgba(251,191,36,.1);
+    --danger: #EF6C6C;
+    --danger-dim: rgba(239,108,108,.1);
+    --text: #F0F0F0;
+    --text-muted: #6B7280;
+    --border: #242424;
+    --shadow: 0 2px 8px rgba(0,0,0,.5), 0 1px 3px rgba(0,0,0,.4);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+    --accent-bar: #E8A838;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -54,7 +56,7 @@
 
   /* ── Header ── */
   header {
-    background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+    background: linear-gradient(135deg, #B45309 0%, #D97706 50%, #F59E0B 100%);
     color: #fff;
     padding: 28px 40px 24px;
     position: sticky;
@@ -137,7 +139,7 @@
   }
   .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #0891b2, #06b6d4);
+    background: linear-gradient(90deg, #B45309, #E8A838, #FBBF24);
     border-radius: 10px;
     transition: width .8s cubic-bezier(.22,1,.36,1);
     position: relative;
@@ -781,7 +783,7 @@ function exportCSV() {
 
 // ── Toast ──
 function showToast(msg, type = 'info') {
-  const colors = { success: '#059669', warning: '#d97706', info: '#0891b2' };
+  const colors = { success: '#059669', warning: '#D97706', info: '#D97706' };
   const bg = colors[type] || colors.info;
   const el = document.createElement('div');
   el.style.cssText = [
@@ -877,9 +879,9 @@ function setStatus(el) {
 
 // ── Source filter (multi-select) ──
 const SOURCE_COLORS = {
-  ClaudeCode: '#0891b2',
+  ClaudeCode: '#D97706',
   Agent: '#059669',
-  Codex: '#d97706',
+  Codex: '#6B7280',
 };
 function toggleSource(el) {
   const src = el.dataset.source;
@@ -1013,10 +1015,10 @@ function renderCharts() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
   const COLORS = [
-    '#0891b2','#06b6d4','#14b8a6','#22d3ee','#2dd4bf',
-    '#0d9488','#059669','#10b981','#34d399','#6ee7b7',
-    '#67e8f9','#7dd3fc','#a5b4fc','#c4b5fd','#f0abfc',
-    '#f9a8d4','#fda4af','#fca5a1','#fcd34d','#a3e635','#86efac'
+    '#D97706','#F59E0B','#FBBF24','#FCD34D','#FDE68A',
+    '#92400E','#B45309','#059669','#10B981','#34D399',
+    '#D97706','#E8A838','#6B7280','#9CA3AF','#D1D5DB',
+    '#F97316','#EF4444','#EC4899','#8B5CF6','#3B82F6'
   ];
   const gridColor = isDark ? '#334155' : '#f1f5f9';
   const tickColor = isDark ? '#94a3b8' : '#64748b';
@@ -1063,7 +1065,7 @@ function renderCharts() {
   // Pie chart — source distribution (each skill counts once per source it belongs to)
   const bySource = { ClaudeCode: 0, Agent: 0, Codex: 0 };
   skills.forEach(s => { (s.sources || []).forEach(src => { if (bySource[src] !== undefined) bySource[src]++; }); });
-  const srcColors = ['#0891b2', '#059669', '#d97706'];
+  const srcColors = ['#D97706', '#059669', '#6B7280'];
   const srcLabels = Object.keys(bySource).filter(k => bySource[k] > 0);
   const srcData = srcLabels.map(k => bySource[k]);
   new Chart(document.getElementById('pieChart'), {
@@ -1116,9 +1118,9 @@ function animateProgress() {
       <span style="width:7px;height:7px;border-radius:50%;background:${color};display:inline-block;"></span>${label} ${bySource[label] || 0}
     </span>`;
     srcCard.querySelector('.source-stats').innerHTML =
-      dot('ClaudeCode', '#0891b2') + ' &nbsp;' +
+      dot('ClaudeCode', '#D97706') + ' &nbsp;' +
       dot('Agent', '#059669') + ' &nbsp;' +
-      dot('Codex', '#d97706');
+      dot('Codex', '#6B7280');
   }
 
   // animate width
