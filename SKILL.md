@@ -66,7 +66,9 @@ node ~/.claude/skills/skills-dashboard/scripts/main.js
 - **来源多选筛选**：可同时选择多个来源，组合过滤
 - **搜索 + 分类标签 + 状态筛选**
 - **来源列**：同名 skill 合并后显示多个来源标签
-- **详情抽屉**：点任意 skill 查看来源、分类、完整描述
+- **Token 估算**：基于 skill 名称和描述长度估算每次调用的 Token 消耗
+- **调用追踪**：从 `~/.claude/projects/**/*.jsonl` 读取累计调用次数和最近使用时间
+- **详情抽屉**：点任意 skill 查看来源、分类、完整描述、Token 数、调用次数、最近使用时间
 - **深色模式**：一键切换，自动记住偏好
 - **加载最新**：一键重新解析所有 skill 目录并刷新面板
 - **导出 CSV**：下载当前数据为 `skills-inventory-YYYY-MM-DD.csv`
@@ -81,3 +83,4 @@ node ~/.claude/skills/skills-dashboard/scripts/main.js
 - 端口 3847 = "3S-D" 谐音（3 Skills Dashboard）
 - 面板右上角「🔄 加载最新」会重新解析三个 skill 目录并刷新数据
 - 同名 skill（如 baoyu-* 系列同时存在于 ClaudeCode 和 Agent）合并为一行
+- 调用追踪数据来源：`~/.claude/projects/**/*.jsonl`，同名 skill 调用次数合并累计

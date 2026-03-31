@@ -56,11 +56,11 @@ node ~/.claude/skills/skills-dashboard/scripts/main.js
 
 | 功能 | 操作 |
 |------|------|
-| 查看所有 skill | 直接浏览表格 |
+| 查看所有 skill | 直接浏览表格（名称 / 来源 / 分类 / 字符数 / Token 估算 / 调用次数） |
 | 按来源筛选 | 点击顶部来源标签（ClaudeCode / Agent / Codex），支持多选 |
 | 按分类筛选 | 点击分类标签，组合过滤 |
 | 关键词搜索 | 顶部搜索框，实时匹配名称和描述 |
-| 查看详情 | 点击任意一行，右侧抽屉展示完整描述 |
+| 查看详情 | 点击任意一行，右侧抽屉展示完整描述、最近使用时间、累计调用次数 |
 | 切换深色模式 | 点击右上角 🌙/☀️ 按钮 |
 | 导出 CSV | 点击右上角「导出 CSV」按钮 |
 | 刷新数据 | 点击右上角「🔄 加载最新」按钮 |
@@ -78,7 +78,13 @@ node ~/.claude/skills/skills-dashboard/scripts/main.js
 1. 来源筛选 → 去掉 ClaudeCode，只看 Agent / Codex
 2. 统计数量 → 确认是否需要迁移
 
-**场景 3：导出团队清单**
+**场景 3：查看使用频率**
+> "哪些 skill 用得最多，哪些几乎没用过？"
+1. 直接浏览表格「调用」列，按调用次数排序
+2. 点击高频 skill 查看详情，了解最近使用时间
+3. 调用为 0 的 skill 可考虑清理或优化
+
+**场景 4：导出团队清单**
 > "我想把所有 skill 导出成清单发给同事"
 1. 筛选到需要导出的数据
 2. 点击「导出 CSV」→ 下载 `skills-inventory-YYYY-MM-DD.csv`
@@ -92,7 +98,9 @@ node ~/.claude/skills/skills-dashboard/scripts/main.js
 - **分类柱状图** + **来源环形图**
 - **来源多选筛选** — ClaudeCode / Agent / Codex 组合过滤
 - **同名合并** — 同一 skill 在多平台存在时合并为一行，来源用逗号分隔
-- **详情抽屉** — 点击查看完整描述、分类、来源
+- **Token 估算** — 基于 skill 名称和描述长度估算 Token 消耗
+- **调用追踪** — 记录每个 skill 的累计调用次数、最近使用时间，数据来源为 `~/.claude/projects/**/*.jsonl`
+- **详情抽屉** — 点击查看完整描述、分类、来源、Token 数、调用次数、最近使用时间
 - **深色模式** — 自动记住偏好
 - **一键刷新** — 重新解析目录并刷新面板
 - **导出 CSV** — 下载当前数据
@@ -146,7 +154,12 @@ skills-dashboard/
 
 编辑 `scripts/main.js` 中的 `CATEGORY_KEYWORDS` 对象，按需调整分类规则。
 
-### 接入其他数据源
+### 调用追踪数据来源
+
+调用次数（`invokeCount`）和最近使用时间（`lastUsed`）从以下文件解析：
+- `~/.claude/projects/**/*.jsonl`
+
+每次加载时自动扫描并汇总。同名 skill 跨平台存在时，调用次数合并累计（求和），`lastUsed` 取最近时间。
 
 参考 `skillDirs` 数组的定义方式，添加更多目录来源：
 
